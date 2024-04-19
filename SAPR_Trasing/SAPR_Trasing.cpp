@@ -44,10 +44,6 @@ struct Cell
     }
 };
 
-struct Chain
-{
-    std::vector<Component> Components;
-};
 
 
 
@@ -188,10 +184,27 @@ void PrintBoardNeighbour(Cell** board, int rows, int cols)
     std::cout << '\n';
 }
 
+void ClearPassInfo(Cell** board, int rows, int cols)
+{
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            board[i][j].PassInfo->IsPassed = false;
+            board[i][j].PassInfo->Weight = 0;
+        }
+    }
+}
+
+
+
 void MarkShortestPath(Cell** board, Cell* startCell, Cell* endCell) {
     Cell* currentCell = endCell;
+    std::vector<Cell*> pathCells;
+
+    // Собираем ячейки пути в вектор
     while (currentCell != startCell) {
-        currentCell->State = ContainsWire;
+        pathCells.push_back(currentCell);
         if (currentCell->DownNeighbour != nullptr && currentCell->DownNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
             currentCell = currentCell->DownNeighbour;
         }
@@ -205,7 +218,14 @@ void MarkShortestPath(Cell** board, Cell* startCell, Cell* endCell) {
             currentCell = currentCell->LeftNeighbour;
         }
     }
-    startCell->State = ContainsWire; // Пометим начальную ячейку
+    pathCells.push_back(startCell);
+
+    // Обновляем состояние доски на основе пути
+    for (Cell* cell : pathCells) {
+        if (cell != startCell && cell != endCell) {
+            cell->State = ContainsWire;
+        }
+    }
 }
 
 void WaveAlgorithm(Cell** board, int rows, int cols, Cell * startCell, Cell * endCell)
@@ -253,48 +273,75 @@ void WaveAlgorithm(Cell** board, int rows, int cols, Cell * startCell, Cell * en
     }
 
     MarkShortestPath(board, startCell, endCell);
+
+    ClearPassInfo(board, rows, cols);
 }
 
+Cell** CreateBoard(int rows, int cols)
+{
+    Cell** board = new Cell * [rows];
+    for (int i = 0; i < rows; ++i)
+    {
+        board[i] = new Cell[cols];
+    }
+    return board;
+}
 
+void DeleteBoard(Cell** board, int rows)
+{
+    for (int i = 0; i < rows; ++i)
+    {
+        delete[] board[i];
+    }
+    delete[] board;
+}
+
+std::vector<Cell*> FindAllElements(Cell** board, int rows, int cols, CellState state)
+{
+    std::vector<Cell*> elements;
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            if (board[i][j].State == state)
+            {
+                elements.push_back(&board[i][j]);
+            }
+        }
+    }
+    return elements;
+}
 
 
 
 
 int main()
 {
-    int rows = 8;
-    int cols = 8; 
+    int rows = 16;
+    int cols = 16; 
 
-    Cell** board = new Cell * [rows];
-    for (int i = 0; i < rows; ++i)
-    {
-        board[i] = new Cell[cols];
-    }
+    Cell** board = CreateBoard(rows, cols);
 
     InitializeBoard(board, rows, cols);
 
     std::cout << "Board: \n";
     PrintBoard(board, rows, cols);
-    std::cout << "Weight: \n";
-    PrintBoardWeight(board, rows, cols);
+
+    // Находим все ячейки, содержащие компоненты
+    std::vector<Cell*> componentCells = FindAllElements(board, rows, cols, ContainsComponent);
 
 
-    WaveAlgorithm(board, rows, cols, &board[3][3], &board[6][5]);
-    PrintBoardWeight(board, rows, cols);
+    WaveAlgorithm(board, rows, cols, componentCells[0], componentCells[2]);
 
-    std::cout << "Board: \n";
+    std::cout << "Board after 1 tracing: \n";
     PrintBoard(board, rows, cols);
 
-    PrintBoardWeight(board, rows, cols);
+    WaveAlgorithm(board, rows, cols, componentCells[1], componentCells[3]);
 
+    std::cout << "Board after 2 tracing: \n";
+    PrintBoard(board, rows, cols);
 
-
-
-    for (int i = 0; i < rows; ++i)
-    {
-        delete[] board[i];
-    }
-    delete[] board;
+    DeleteBoard(board, rows);
 
     return 0;
 }
