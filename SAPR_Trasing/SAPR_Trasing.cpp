@@ -119,13 +119,13 @@ void PrintBoard(Cell** board, int rows, int cols)
                 std::cout << ". ";
                 break;
             case Obstacle:
-                std::cout << "@ ";
+                std::cout << "\033[1;31m@ \033[0m"; // Red color for obstaclesR
                 break;
             case ContainsComponent:
-                std::cout << "C ";
+                std::cout << "\033[1;34mC \033[0m"; // Blue color for components
                 break;
             case ContainsWire:
-                std::cout << "x ";
+                std::cout << "\033[1;32mx \033[0m"; // Green color for wires
                 break;
             default:
                 std::cout << "? "; // Unknown state
@@ -318,7 +318,7 @@ std::vector<Cell*> FindAllElements(Cell** board, int rows, int cols, CellState s
 int main()
 {
     int rows = 16;
-    int cols = 16; 
+    int cols = 16;
 
     Cell** board = CreateBoard(rows, cols);
 
@@ -327,19 +327,25 @@ int main()
     std::cout << "Board: \n";
     PrintBoard(board, rows, cols);
 
-    // Находим все ячейки, содержащие компоненты
     std::vector<Cell*> componentCells = FindAllElements(board, rows, cols, ContainsComponent);
 
+    while (true)
+    {
 
-    WaveAlgorithm(board, rows, cols, componentCells[0], componentCells[2]);
+        int component1, component2;
+        std::cout << "Enter the numbers of the components you want to connect (from 0 to " << componentCells.size() - 1 << "): ";
+        std::cin >> component1 >> component2;
 
-    std::cout << "Board after 1 tracing: \n";
-    PrintBoard(board, rows, cols);
+        if (component1 >= 0 && component1 < componentCells.size() && component2 >= 0 && component2 < componentCells.size()) {
+            WaveAlgorithm(board, rows, cols, componentCells[component1], componentCells[component2]);
 
-    WaveAlgorithm(board, rows, cols, componentCells[1], componentCells[3]);
-
-    std::cout << "Board after 2 tracing: \n";
-    PrintBoard(board, rows, cols);
+            std::cout << "Board after tracing: \n";
+            PrintBoard(board, rows, cols);
+        }
+        else {
+            std::cout << "Invalid component numbers entered. Please enter valid component numbers.\n";
+        }
+    }
 
     DeleteBoard(board, rows);
 
