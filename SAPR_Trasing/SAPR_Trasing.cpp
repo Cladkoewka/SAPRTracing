@@ -44,9 +44,7 @@ struct Cell
     }
 };
 
-
-
-
+// Считывание рабочего поля из файла
 void InitializeBoard(Cell** board, int rows, int cols)
 {
     std::ifstream inputFile("board.txt");
@@ -107,6 +105,7 @@ void InitializeBoard(Cell** board, int rows, int cols)
     inputFile.close();
 }
 
+// Вывод рабочего поля в консоль
 void PrintBoard(Cell** board, int rows, int cols)
 {
     for (int i = 0; i < rows; ++i)
@@ -137,53 +136,8 @@ void PrintBoard(Cell** board, int rows, int cols)
     std::cout << '\n';
 }
 
-void PrintBoardWeight(Cell** board, int rows, int cols)
-{
-    for (int i = 0; i < rows; ++i)
-    {
-        for (int j = 0; j < cols; ++j)
-        {
-            std::cout << board[i][j].PassInfo->Weight << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << '\n';
-}
 
-
-void PrintBoardId(Cell** board, int rows, int cols)
-{
-    for (int i = 0; i < rows; ++i)
-    {
-        for (int j = 0; j < cols; ++j)
-        {
-            std::cout << board[i][j].Id << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << '\n';
-}
-
-void PrintBoardNeighbour(Cell** board, int rows, int cols)
-{
-    for (int i = 0; i < rows; ++i)
-    {
-        for (int j = 0; j < cols; ++j)
-        {
-            if (board[i][j].DownNeighbour != nullptr)
-            {
-                std::cout << board[i][j].DownNeighbour->Id << " ";
-            }
-            else
-            {
-                std::cout << "00 ";
-            }
-        }
-        std::cout << std::endl;
-    }
-    std::cout << '\n';
-}
-
+// Очистка информации о прохождении
 void ClearPassInfo(Cell** board, int rows, int cols)
 {
     for (int i = 0; i < rows; ++i)
@@ -281,6 +235,7 @@ void WaveAlgorithm(Cell** board, int rows, int cols, Cell * startCell, Cell * en
     ClearPassInfo(board, rows, cols);
 }
 
+// Выделяем память под рабочее поле
 Cell** CreateBoard(int rows, int cols)
 {
     Cell** board = new Cell * [rows];
@@ -291,6 +246,7 @@ Cell** CreateBoard(int rows, int cols)
     return board;
 }
 
+// Очищаем память рабочего поля
 void DeleteBoard(Cell** board, int rows)
 {
     for (int i = 0; i < rows; ++i)
@@ -300,6 +256,7 @@ void DeleteBoard(Cell** board, int rows)
     delete[] board;
 }
 
+// Поиск всех элементов на робочем поле
 std::vector<Cell*> FindAllElements(Cell** board, int rows, int cols, CellState state)
 {
     std::vector<Cell*> elements;
@@ -315,9 +272,6 @@ std::vector<Cell*> FindAllElements(Cell** board, int rows, int cols, CellState s
     }
     return elements;
 }
-
-
-
 
 int main()
 {
