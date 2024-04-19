@@ -197,7 +197,7 @@ void ClearPassInfo(Cell** board, int rows, int cols)
 }
 
 
-
+//Прокладка пути
 void MarkShortestPath(Cell** board, Cell* startCell, Cell* endCell) {
     Cell* currentCell = endCell;
     std::vector<Cell*> pathCells;
@@ -228,6 +228,7 @@ void MarkShortestPath(Cell** board, Cell* startCell, Cell* endCell) {
     }
 }
 
+//Волновой алгоритм, взвешивание ячеек, построение фронта
 void WaveAlgorithm(Cell** board, int rows, int cols, Cell * startCell, Cell * endCell)
 {
     // Установка начальной ячейки
@@ -239,6 +240,9 @@ void WaveAlgorithm(Cell** board, int rows, int cols, Cell * startCell, Cell * en
 
     while (!cellsQueue.empty())
     {
+
+        // Выделить веса в отдельную функцию, чтобы учитывать ограничения 
+        // Взвешивание по определенным критериям (например минимальное количество пересечений, или минимальное количество изгибов)
         Cell* currentCell = cellsQueue.front();
         cellsQueue.pop();
 
@@ -317,6 +321,10 @@ std::vector<Cell*> FindAllElements(Cell** board, int rows, int cols, CellState s
 
 int main()
 {
+    // Персечения в пределах одной цепи запрещены
+    // Разные цепи разными цветами
+    // Передавать в волнойвой алгоритм массив элементов, принадлежащих одной цепи
+    // 2 подхода, цепи по очереди
     int rows = 16;
     int cols = 16;
 
