@@ -3,10 +3,11 @@
 #include <vector>
 #include <fstream>
 #include <queue>
+#include <iomanip>
 
 struct Component
 {
-    //Component params
+    std::vector<int> TraceIds; // Номера трасс, которым принадлежит компонент
 };
 
 enum CellState
@@ -23,6 +24,17 @@ struct PassInfo
     int Weight = 0;
 };
 
+
+//Путевая координата
+enum Direction
+{
+    Down,
+    Left,
+    Up,
+    Right
+
+};
+
 struct Cell
 {
     int Id;
@@ -34,6 +46,7 @@ struct Cell
     PassInfo* PassInfo;
 
     CellState State;
+    Direction Direction;
 
 
     Component* component;
@@ -72,10 +85,17 @@ void InitializeBoard(Cell** board, int rows, int cols)
             case 'O': // Obstacle
                 board[i][j].State = Obstacle;
                 break;
-            case 'C': // Cell contains component
+            case '1': // Cell contains component
                 board[i][j].State = ContainsComponent;
                 // Initialize component data
                 board[i][j].component = new Component();
+                board[i][j].component->TraceIds.push_back(1);
+                break;
+            case '2': // Cell contains component
+                board[i][j].State = ContainsComponent;
+                // Initialize component data
+                board[i][j].component = new Component();
+                board[i][j].component->TraceIds.push_back(2);
                 break;
             default:
                 break;
@@ -135,6 +155,78 @@ void PrintBoard(Cell** board, int rows, int cols)
     }
     std::cout << '\n';
 }
+void PrintBoardWeight(Cell** board, int rows, int cols)
+{
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            std::cout << std::setw(3) << board[i][j].PassInfo->Weight << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << '\n';
+}
+void PrintBoardId(Cell** board, int rows, int cols)
+{
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            std::cout << board[i][j].Id << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << '\n';
+}
+void PrintBoardNeighbour(Cell** board, int rows, int cols)
+{
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            if (board[i][j].DownNeighbour != nullptr)
+            {
+                std::cout << board[i][j].DownNeighbour->Id << " ";
+            }
+            else
+            {
+                std::cout << "00 ";
+            }
+        }
+        std::cout << std::endl;
+    }
+    std::cout << '\n';
+}
+void PrintBoardDirection(Cell** board, int rows, int cols)
+{
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            switch (board[i][j].Direction)
+            {
+            case Down:
+                std::cout << "D "; // Стрелка вниз
+                break;
+            case Up:
+                std::cout << "U "; // Стрелка вверх
+                break;
+            case Left:
+                std::cout << "L "; // Стрелка влево
+                break;
+            case Right:
+                std::cout << "R "; // Стрелка вправо
+                break;
+            default:
+                std::cout << "- "; // Нет направления
+                break;
+            }
+        }
+        std::cout << std::endl;
+    }
+    std::cout << '\n';
+}
 
 
 // Очистка информации о прохождении
@@ -159,17 +251,49 @@ void MarkShortestPath(Cell** board, Cell* startCell, Cell* endCell) {
     // Собираем ячейки пути в вектор
     while (currentCell != startCell) {
         pathCells.push_back(currentCell);
+        Direction prevDirection = currentCell->Direction;
+
+        // Найти соседа с наименьшим весом и путевыми координатами
+        Cell* nextCell = nullptr;
+        int minWeight = INT_MAX;
+        Direction minDirection = static_cast<Direction>(-1);
+
         if (currentCell->DownNeighbour != nullptr && currentCell->DownNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
-            currentCell = currentCell->DownNeighbour;
+            if (currentCell->DownNeighbour->PassInfo->Weight < minWeight || (currentCell->DownNeighbour->PassInfo->Weight == minWeight && currentCell->DownNeighbour->Direction < minDirection)) {
+                nextCell = currentCell->DownNeighbour;
+                minWeight = nextCell->PassInfo->Weight;
+                minDirection = Down;
+            }
         }
-        else if (currentCell->UpNeighbour != nullptr && currentCell->UpNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
-            currentCell = currentCell->UpNeighbour;
+        if (currentCell->UpNeighbour != nullptr && currentCell->UpNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
+            if (currentCell->UpNeighbour->PassInfo->Weight < minWeight || (currentCell->UpNeighbour->PassInfo->Weight == minWeight && currentCell->UpNeighbour->Direction < minDirection)) {
+                nextCell = currentCell->UpNeighbour;
+                minWeight = nextCell->PassInfo->Weight;
+                minDirection = Up;
+            }
         }
-        else if (currentCell->RightNeighbour != nullptr && currentCell->RightNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
-            currentCell = currentCell->RightNeighbour;
+        if (currentCell->RightNeighbour != nullptr && currentCell->RightNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
+            if (currentCell->RightNeighbour->PassInfo->Weight < minWeight || (currentCell->RightNeighbour->PassInfo->Weight == minWeight && currentCell->RightNeighbour->Direction < minDirection)) {
+                nextCell = currentCell->RightNeighbour;
+                minWeight = nextCell->PassInfo->Weight;
+                minDirection = Right;
+            }
         }
-        else if (currentCell->LeftNeighbour != nullptr && currentCell->LeftNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
-            currentCell = currentCell->LeftNeighbour;
+        if (currentCell->LeftNeighbour != nullptr && currentCell->LeftNeighbour->PassInfo->Weight == currentCell->PassInfo->Weight - 1) {
+            if (currentCell->LeftNeighbour->PassInfo->Weight < minWeight || (currentCell->LeftNeighbour->PassInfo->Weight == minWeight && currentCell->LeftNeighbour->Direction < minDirection)) {
+                nextCell = currentCell->LeftNeighbour;
+                minWeight = nextCell->PassInfo->Weight;
+                minDirection = Left;
+            }
+        }
+
+        if (nextCell != nullptr) {
+            currentCell = nextCell;
+            currentCell->Direction = minDirection;
+        }
+        else {
+            // Если не найден следующий ход, значит что-то пошло не так
+            break;
         }
     }
     pathCells.push_back(startCell);
@@ -182,11 +306,22 @@ void MarkShortestPath(Cell** board, Cell* startCell, Cell* endCell) {
     }
 }
 
+int CalculateWeight(Cell* currentCell, Cell* neighbour, Direction currentDirection)
+{
+    int weight = currentCell->PassInfo->Weight + 1;
+    if (currentCell->Direction != neighbour->Direction)
+    {
+        weight++; // Увеличиваем вес для поворота
+    }
+    return weight;
+}
+
 //Волновой алгоритм, взвешивание ячеек, построение фронта
 void WaveAlgorithm(Cell** board, int rows, int cols, Cell * startCell, Cell * endCell)
 {
     // Установка начальной ячейки
     startCell->PassInfo->IsPassed = true;
+    startCell->Direction = Down;
 
     // Очередь для обхода ячеек
     std::queue<Cell*> cellsQueue;
@@ -203,32 +338,59 @@ void WaveAlgorithm(Cell** board, int rows, int cols, Cell * startCell, Cell * en
         // Проверка и обработка соседних ячеек
         if (currentCell->DownNeighbour != nullptr && !currentCell->DownNeighbour->PassInfo->IsPassed)
         {
-            currentCell->DownNeighbour->PassInfo->Weight = currentCell->PassInfo->Weight + 1;
+            int weight = currentCell->PassInfo->Weight + 1;
+            if (currentCell->Direction != Down)
+            {
+                weight++; // Увеличиваем вес для поворота
+            }
+            currentCell->DownNeighbour->PassInfo->Weight = weight;
             currentCell->DownNeighbour->PassInfo->IsPassed = true;
+            currentCell->DownNeighbour->Direction = Down;
             cellsQueue.push(currentCell->DownNeighbour);
         }
 
         if (currentCell->UpNeighbour != nullptr && !currentCell->UpNeighbour->PassInfo->IsPassed)
         {
-            currentCell->UpNeighbour->PassInfo->Weight = currentCell->PassInfo->Weight + 1;
+            int weight = currentCell->PassInfo->Weight + 1;
+            if (currentCell->Direction != Up)
+            {
+                weight++; // Увеличиваем вес для поворота
+            }
+            currentCell->UpNeighbour->PassInfo->Weight = weight;
             currentCell->UpNeighbour->PassInfo->IsPassed = true;
+            currentCell->UpNeighbour->Direction = Up;
             cellsQueue.push(currentCell->UpNeighbour);
         }
 
         if (currentCell->RightNeighbour != nullptr && !currentCell->RightNeighbour->PassInfo->IsPassed)
         {
-            currentCell->RightNeighbour->PassInfo->Weight = currentCell->PassInfo->Weight + 1;
+            int weight = currentCell->PassInfo->Weight + 1;
+            if (currentCell->Direction != Right)
+            {
+                weight++; // Увеличиваем вес для поворота
+            }
+            currentCell->RightNeighbour->PassInfo->Weight = weight;
             currentCell->RightNeighbour->PassInfo->IsPassed = true;
+            currentCell->RightNeighbour->Direction = Right;
             cellsQueue.push(currentCell->RightNeighbour);
         }
 
         if (currentCell->LeftNeighbour != nullptr && !currentCell->LeftNeighbour->PassInfo->IsPassed)
         {
-            currentCell->LeftNeighbour->PassInfo->Weight = currentCell->PassInfo->Weight + 1;
+            int weight = currentCell->PassInfo->Weight + 1;
+            if (currentCell->Direction != Left)
+            {
+                weight++; // Увеличиваем вес для поворота
+            }
+            currentCell->LeftNeighbour->PassInfo->Weight = weight;
             currentCell->LeftNeighbour->PassInfo->IsPassed = true;
+            currentCell->LeftNeighbour->Direction = Left;
             cellsQueue.push(currentCell->LeftNeighbour);
         }
     }
+
+    PrintBoardWeight(board, rows, cols);
+    PrintBoardDirection(board, rows, cols);
 
     MarkShortestPath(board, startCell, endCell);
 
@@ -272,6 +434,8 @@ std::vector<Cell*> FindAllElements(Cell** board, int rows, int cols, CellState s
     }
     return elements;
 }
+
+
 
 int main()
 {
